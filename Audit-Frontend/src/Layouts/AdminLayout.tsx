@@ -1,5 +1,5 @@
 import React from 'react'
-import { Outlet, useLocation } from 'react-router-dom'
+import DashboardLayout from './DashboardLayout'
 import Sidebar from '@/Components/admin/Sidebar'
 import Navbar from '@/Components/admin/Navbar'
 
@@ -12,21 +12,13 @@ const pageTitles: Record<string, string> = {
   '/admin/corrective-actions': 'Corrective Actions',
 }
 
-const AdminLayout: React.FC = () => {
-  const { pathname } = useLocation()
-  const title = pageTitles[pathname] ?? 'Admin'
-
-  return (
-    <div className="flex min-h-screen bg-slate-50">
-      <Sidebar />
-      <div className="flex-1 flex flex-col min-w-0">
-        <Navbar title={title} />
-        <main className="flex-1 p-6 overflow-auto">
-          <Outlet />
-        </main>
-      </div>
-    </div>
-  )
-}
+const AdminLayout: React.FC = () => (
+  <DashboardLayout
+    sidebar={<Sidebar />}
+    navbar={(title) => <Navbar title={title} />}
+    pageTitles={pageTitles}
+    fallbackTitle="Admin"
+  />
+)
 
 export default AdminLayout

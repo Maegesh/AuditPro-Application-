@@ -4,6 +4,7 @@ using AuditManagement.API.Models;
 using AuditManagement.API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Hosting;
 
 namespace AuditManagement.API.Services.Implementations;
 
@@ -12,27 +13,38 @@ public class ObservationService : IObservationService
     private readonly IObservationRepository _observationRepository;
     private readonly AuditSystemDbContext _context;
     private readonly ILogger<ObservationService> _logger;
+    private readonly IWebHostEnvironment _env;
 
     public ObservationService(IObservationRepository observationRepository,
                               AuditSystemDbContext context,
-                              ILogger<ObservationService> logger)
+                              ILogger<ObservationService> logger,
+                              IWebHostEnvironment env)
     {
         _observationRepository = observationRepository;
         _context = context;
         _logger = logger;
+        _env = env;
     }
 
     public async Task AddObservationAsync(CreateObservationDto dto)
     {
         _logger.LogInformation("Adding observation for AuditId: {AuditId}", dto.AuditId);
 
-        var auditExists = await _context.Audits
-            .AnyAsync(a => a.AuditId == dto.AuditId && a.IsDeleted != true);
+        var audit = await _context.Audits
+            .FirstOrDefaultAsync(a => a.AuditId == dto.AuditId && a.IsDeleted != true);
 
-        if (!auditExists)
+        if (audit == null)
         {
             _logger.LogWarning("Audit not found for ID: {AuditId}", dto.AuditId);
             throw new Exception("Audit not found");
+        }
+
+        if (audit.Status == AuditStatus.Scheduled.ToString())
+        {
+            audit.Status = AuditStatus.InProgress.ToString();
+            audit.UpdatedAt = DateTime.UtcNow;
+            _context.Audits.Update(audit);
+            _logger.LogInformation("Audit {AuditId} status changed to InProgress", dto.AuditId);
         }
 
         var observation = new Observation
@@ -48,6 +60,16 @@ public class ObservationService : IObservationService
             DueDate = DateOnly.FromDateTime(dto.DueDate)
         };
 
+        if (dto.ProofFile != null)
+        {
+            var uploadsFolder = Path.Combine(_env.ContentRootPath, "wwwroot", "uploads");
+            Directory.CreateDirectory(uploadsFolder);
+            var fileName = $"{Guid.NewGuid()}_{Path.GetFileName(dto.ProofFile.FileName)}";
+            using var stream = new FileStream(Path.Combine(uploadsFolder, fileName), FileMode.Create);
+            await dto.ProofFile.CopyToAsync(stream);
+            observation.ProofFilePath = $"/uploads/{fileName}";
+        }
+
         await _observationRepository.AddAsync(observation);
 
         _logger.LogInformation("Observation added successfully for AuditId: {AuditId}", dto.AuditId);
@@ -61,14 +83,15 @@ public class ObservationService : IObservationService
         {
             ObservationId = o.ObservationId,
             AuditId = o.AuditId,
-            Title = o.Title,
-            Description = o.Description,
-            AreaOrLocation = o.AreaOrLocation,
-            Finding = o.Finding,
-            RiskOrImpact = o.RiskOrImpact,
-            Recommendation = o.Recommendation,
-            Severity = o.Severity,
-            DueDate = o.DueDate
+            Title = o.Title!,
+            Description = o.Description!,
+            AreaOrLocation = o.AreaOrLocation!,
+            Finding = o.Finding!,
+            RiskOrImpact = o.RiskOrImpact!,
+            Recommendation = o.Recommendation!,
+            Severity = o.Severity!,
+            DueDate = o.DueDate,
+            ProofFilePath = o.ProofFilePath
         }).ToList();
     }
 

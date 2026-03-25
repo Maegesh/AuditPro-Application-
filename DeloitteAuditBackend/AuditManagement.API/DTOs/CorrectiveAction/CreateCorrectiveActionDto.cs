@@ -6,11 +6,11 @@ public class CreateCorrectiveActionDto
 
     public int AssignedToUserId { get; set; }
 
-    public string ActionDescription { get; set; }
+    public string ActionDescription { get; set; } = null!;
 
-    public string RootCause { get; set; }
+    public string RootCause { get; set; } = null!;
 
-    public string ExpectedOutcome { get; set; }
+    public string ExpectedOutcome { get; set; } = null!;
 
     public DateTime DueDate { get; set; }
 

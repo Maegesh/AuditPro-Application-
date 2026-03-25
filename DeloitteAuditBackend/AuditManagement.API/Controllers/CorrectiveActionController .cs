@@ -32,9 +32,9 @@ public class CorrectiveActionController : ControllerBase
         return Ok("Corrective action updated successfully");
     }
 
-    //  Employee + Admin can view actions
+    //  Employee + Admin + Auditor can view actions
     [HttpGet("{observationId}")]
-    [Authorize(Roles = "Admin,Employee")]
+    [Authorize(Roles = "Admin,Employee,Auditor")]
     public async Task<IActionResult> GetActions(int observationId)
     {
         var result = await _service.GetActionsByObservation(observationId);
@@ -46,7 +46,7 @@ public class CorrectiveActionController : ControllerBase
     [Authorize(Roles = "Employee")]
     public async Task<IActionResult> GetMyActions()
     {
-        var userId = int.Parse(User.FindFirst("UserId").Value);
+        var userId = int.Parse(User.FindFirst("UserId")!.Value);
         var result = await _service.GetMyActionsAsync(userId);
         return Ok(result);
     }
@@ -56,7 +56,7 @@ public class CorrectiveActionController : ControllerBase
     [Authorize(Roles = "Employee")]
     public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateActionStatusDto dto)
     {
-        var userId = int.Parse(User.FindFirst("UserId").Value);
+        var userId = int.Parse(User.FindFirst("UserId")!.Value);
         await _service.UpdateActionStatusAsync(id, dto, userId);
         return Ok("Status updated successfully");
     }

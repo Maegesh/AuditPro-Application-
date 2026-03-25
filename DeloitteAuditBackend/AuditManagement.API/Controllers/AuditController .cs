@@ -19,7 +19,7 @@ public class AuditController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> CreateAudit([FromBody] CreateAuditDto dto)
     {
-        var userId = int.Parse(User.FindFirst("UserId").Value);
+        var userId = int.Parse(User.FindFirst("UserId")!.Value);
 
         await _auditService.CreateAuditAsync(dto, userId);
         return Ok("Audit created successfully");
@@ -30,7 +30,7 @@ public class AuditController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetAuditsForAdmin()
     {
-        var userId = int.Parse(User.FindFirst("UserId").Value);
+        var userId = int.Parse(User.FindFirst("UserId")!.Value);
 
         var result = await _auditService.GetAuditsForAdmin(userId);
         return Ok(result);
@@ -41,7 +41,7 @@ public class AuditController : ControllerBase
     [Authorize(Roles = "Auditor")]
     public async Task<IActionResult> GetAuditsForAuditor()
     {
-        var userId = int.Parse(User.FindFirst("UserId").Value);
+        var userId = int.Parse(User.FindFirst("UserId")!.Value);
         var result = await _auditService.GetAuditsForAuditor(userId);
         return Ok(result);
     }
@@ -51,7 +51,7 @@ public class AuditController : ControllerBase
     [Authorize(Roles = "Auditor")]
     public async Task<IActionResult> SubmitAudit(int id)
     {
-        var userId = int.Parse(User.FindFirst("UserId").Value);
+        var userId = int.Parse(User.FindFirst("UserId")!.Value);
         await _auditService.SubmitAuditAsync(id, userId);
         return Ok("Audit submitted for approval");
     }

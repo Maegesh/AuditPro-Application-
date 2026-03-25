@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using Serilog;
 using Microsoft.OpenApi.Models;
+using Microsoft.Extensions.FileProviders;
 
 using AuditManagement.API.Data;
 using AuditManagement.API.Repositories.Interfaces;
@@ -56,7 +57,7 @@ builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 
-var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]);
+var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]!);
 
 builder.Services.AddAuthentication("Bearer")
     .AddJwtBearer("Bearer", options =>
@@ -129,6 +130,13 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseCors("AllowFrontend");
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(
+        Path.Combine(builder.Environment.ContentRootPath, "wwwroot")),
+    RequestPath = ""
+});
 
 // 🔥 ORDER IS IMPORTANT
 app.UseAuthentication();

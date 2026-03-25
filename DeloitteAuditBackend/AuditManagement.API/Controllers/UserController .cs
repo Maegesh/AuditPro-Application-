@@ -27,7 +27,7 @@ public class UserController : ControllerBase
     [Authorize(Roles = "Auditor,Employee")]
     public async Task<IActionResult> UpdateProfile([FromBody] UpdateUserDto dto)
     {
-        var userId = int.Parse(User.FindFirst("UserId").Value);
+        var userId = int.Parse(User.FindFirst("UserId")!.Value);
         await _userService.UpdateProfileAsync(userId, dto);
         return Ok("Profile updated successfully");
     }
@@ -48,5 +48,15 @@ public class UserController : ControllerBase
     {
         var result = await _userService.GetAllUsersAsync();
         return Ok(result);
+    }
+
+    // Auditor/Admin fetches employees to assign corrective actions
+    [HttpGet("employees")]
+    [Authorize(Roles = "Admin,Auditor")]
+    public async Task<IActionResult> GetEmployees()
+    {
+        var result = await _userService.GetAllUsersAsync();
+        var employees = result.Where(u => u.Role == "Employee").ToList();
+        return Ok(employees);
     }
 }

@@ -15,4 +15,6 @@ public class CorrectiveActionResponseDto
     public DateOnly? DueDate { get; set; }
 
     public string? Status { get; set; }
+
+    public string? ProofFilePath { get; set; }
 }

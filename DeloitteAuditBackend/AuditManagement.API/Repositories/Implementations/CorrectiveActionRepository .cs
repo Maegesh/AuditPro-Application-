@@ -42,6 +42,7 @@ public class CorrectiveActionRepository : ICorrectiveActionRepository
     public async Task<List<CorrectiveAction>> GetByAssignedUserIdAsync(int userId)
     {
         return await _context.CorrectiveActions
+            .Include(a => a.Observation)
             .Where(a => a.AssignedToUserId == userId && a.IsDeleted != true)
             .ToListAsync();
     }

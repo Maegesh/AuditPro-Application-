@@ -189,7 +189,8 @@ public class CorrectiveActionService : ICorrectiveActionService
             RootCause = a.RootCause,
             ExpectedOutcome = a.ExpectedOutcome,
             DueDate = a.DueDate,
-            Status = a.Status
+            Status = a.Status,
+            ProofFilePath = a.Observation?.ProofFilePath
         }).ToList();
     }
 

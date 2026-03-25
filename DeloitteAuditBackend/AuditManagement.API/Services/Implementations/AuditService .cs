@@ -9,16 +9,22 @@ public class AuditService : IAuditService
 {
     private readonly IAuditRepository _auditRepository;
     private readonly IUserRepository _userRepository;
+    private readonly IObservationRepository _observationRepository;
+    private readonly ICorrectiveActionRepository _correctiveActionRepository;
     private readonly IEmailService _emailService;
     private readonly ILogger<AuditService> _logger;
 
     public AuditService(IAuditRepository auditRepository,
                         IUserRepository userRepository,
+                        IObservationRepository observationRepository,
+                        ICorrectiveActionRepository correctiveActionRepository,
                         IEmailService emailService,
                         ILogger<AuditService> logger)
     {
         _auditRepository = auditRepository;
         _userRepository = userRepository;
+        _observationRepository = observationRepository;
+        _correctiveActionRepository = correctiveActionRepository;
         _emailService = emailService;
         _logger = logger;
     }
@@ -85,6 +91,22 @@ public class AuditService : IAuditService
         {
             _logger.LogWarning("Audit not found or not assigned to Auditor: {AuditorId}", auditorId);
             throw new Exception("Audit not found or not assigned to you");
+        }
+
+        var observations = await _observationRepository.GetByAuditIdAsync(auditId);
+
+        if (observations.Count == 0)
+            throw new Exception("Cannot submit: no observations have been added to this audit.");
+
+        foreach (var obs in observations)
+        {
+            var actions = await _correctiveActionRepository.GetByObservationIdAsync(obs.ObservationId);
+
+            if (actions.Count == 0)
+                throw new Exception($"Cannot submit: observation '{obs.Title}' has no corrective actions assigned.");
+
+            if (actions.Any(a => a.Status != ActionStatus.Resolved.ToString()))
+                throw new Exception($"Cannot submit: not all corrective actions for observation '{obs.Title}' are resolved.");
         }
 
         audit.Status = AuditStatus.PendingApproval.ToString();

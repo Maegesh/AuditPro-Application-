@@ -196,6 +196,9 @@ namespace AuditManagement.API.Migrations
                         .HasColumnType("bit")
                         .HasDefaultValue(false);
 
+                    b.Property<string>("ProofFilePath")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Recommendation")
                         .HasColumnType("nvarchar(max)");
 
