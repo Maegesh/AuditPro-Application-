@@ -25,7 +25,9 @@ public partial class Observation
 
     public DateOnly? DueDate { get; set; }
 
-    public string? ProofFilePath { get; set; }
+    public byte[]? ProofFileData { get; set; }
+
+    public string? ProofFileName { get; set; }
 
     public DateTime? CreatedAt { get; set; }
 

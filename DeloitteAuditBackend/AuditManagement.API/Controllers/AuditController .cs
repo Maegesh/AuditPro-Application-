@@ -52,16 +52,29 @@ public class AuditController : ControllerBase
     public async Task<IActionResult> SubmitAudit(int id)
     {
         var userId = int.Parse(User.FindFirst("UserId")!.Value);
-        await _auditService.SubmitAuditAsync(id, userId);
-        return Ok("Audit submitted for approval");
+        try
+        {
+            await _auditService.SubmitAuditAsync(id, userId);
+            return Ok("Audit submitted for approval");
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
-    // Admin approves audit as completed
     [HttpPut("{id}/approve")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> ApproveAudit(int id)
     {
-        await _auditService.ApproveAuditAsync(id);
-        return Ok("Audit approved and marked as completed");
+        try
+        {
+            await _auditService.ApproveAuditAsync(id);
+            return Ok("Audit approved and marked as completed");
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 }

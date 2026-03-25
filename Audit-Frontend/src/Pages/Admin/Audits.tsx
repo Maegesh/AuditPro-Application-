@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { ClipboardList, PlusCircle, Calendar } from 'lucide-react'
+import { ClipboardList, PlusCircle, Calendar, User, Building2, ShieldCheck } from 'lucide-react'
 import { Button } from '@/Components/ui/button'
 import { Input } from '@/Components/ui/input'
 import { Label } from '@/Components/ui/label'
@@ -8,7 +8,8 @@ import EmptyState from '@/Components/shared/EmptyState'
 import Modal from '@/Components/shared/Modal'
 import { statusColors } from '@/lib/constants'
 import { getDepartments, type Department } from '@/Services/departmentService'
-import { getAuditorsByDepartment, createAudit, getAdminAudits, approveAudit, type Auditor, type Audit } from '@/Services/auditService'
+import { createAudit, getAdminAudits, approveAudit, type Audit } from '@/Services/auditService'
+import { getAuditorsByDepartment, type User as Auditor } from '@/Services/userService'
 
 interface FormState {
   auditName: string
@@ -32,6 +33,7 @@ const Audits: React.FC = () => {
   const [error, setError] = useState('')
   const [statusFilter, setStatusFilter] = useState('All')
   const [search, setSearch] = useState('')
+  const [selectedAudit, setSelectedAudit] = useState<Audit | null>(null)
 
   const fetchAudits = () =>
     getAdminAudits().then((res) => setAudits(res.data)).catch(() => setAudits([]))
@@ -54,6 +56,11 @@ const Audits: React.FC = () => {
     e.preventDefault()
     if (!form.auditName || !form.departmentId || !form.auditorId || !form.startDate || !form.endDate) {
       setError('All fields are required.'); return
+    }
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    if (new Date(form.startDate) < today) {
+      setError('Start date cannot be in the past.'); return
     }
     if (new Date(form.endDate) <= new Date(form.startDate)) {
       setError('End date must be after start date.'); return
@@ -141,23 +148,61 @@ const Audits: React.FC = () => {
                   <Calendar className="w-3.5 h-3.5" />
                   <span>{a.startDate ?? '—'} → {a.endDate ?? '—'}</span>
                 </div>
-                {a.status === 'PendingApproval' && (
-                  <div className="border-t border-slate-100 pt-3">
+                <div className="flex items-center gap-3 border-t border-slate-100 pt-3">
+                  <button
+                    onClick={() => setSelectedAudit(a)}
+                    className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                  >
+                    View Details
+                  </button>
+                  {a.status === 'PendingApproval' && (
                     <Button
                       size="sm"
-                      className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+                      className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700 text-white ml-auto"
                       onClick={() => handleApprove(a.auditId)}
                     >
                       Approve Audit
                     </Button>
-                  </div>
-                )}
+                  )}
+                </div>
               </CardContent>
             </Card>
           ))}
         </div>
         )
       })()}
+
+      {selectedAudit && (
+        <Modal title="Audit Details" subtitle={selectedAudit.auditName} onClose={() => setSelectedAudit(null)}>
+          <div className="flex flex-col gap-3">
+            {[
+              { icon: ClipboardList, label: 'Audit Name',    value: selectedAudit.auditName },
+              { icon: Building2,    label: 'Department',    value: selectedAudit.departmentName },
+              { icon: User,         label: 'Auditor',       value: selectedAudit.auditorName },
+              { icon: ShieldCheck,  label: 'Auditor Email', value: selectedAudit.auditorEmail },
+              { icon: User,         label: 'Created By',    value: selectedAudit.createdBy },
+              { icon: Calendar,     label: 'Start Date',    value: selectedAudit.startDate ?? '—' },
+              { icon: Calendar,     label: 'End Date',      value: selectedAudit.endDate ?? '—' },
+              { icon: Calendar,     label: 'Created At',    value: selectedAudit.createdAt ? new Date(selectedAudit.createdAt).toLocaleDateString() : '—' },
+            ].map(({ icon: Icon, label, value }) => (
+              <div key={label} className="flex items-center gap-3 py-2 border-b border-slate-100 last:border-0">
+                <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+                  <Icon className="w-4 h-4 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-[11px] text-slate-400">{label}</p>
+                  <p className="text-sm font-medium text-slate-800">{value}</p>
+                </div>
+                <span className={`ml-auto text-[11px] font-medium px-2 py-0.5 rounded-full ${
+                  label === 'Audit Name' ? (statusColors[selectedAudit.status] ?? 'bg-slate-100 text-slate-600') : 'hidden'
+                }`}>
+                  {label === 'Audit Name' ? selectedAudit.status : ''}
+                </span>
+              </div>
+            ))}
+          </div>
+        </Modal>
+      )}
 
       {showModal && (
         <Modal title="Create Audit" subtitle="Assign an audit to an auditor." onClose={closeModal}>
@@ -185,7 +230,7 @@ const Audits: React.FC = () => {
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1.5">
                 <Label className="text-slate-700 text-sm">Start Date</Label>
-                <Input name="startDate" type="date" value={form.startDate} onChange={handleChange} className="h-10" />
+                <Input name="startDate" type="date" value={form.startDate} onChange={handleChange} className="h-10" min={new Date().toISOString().split('T')[0]} />
               </div>
               <div className="flex flex-col gap-1.5">
                 <Label className="text-slate-700 text-sm">End Date</Label>

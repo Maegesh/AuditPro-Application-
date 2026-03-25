@@ -50,6 +50,41 @@ public class CorrectiveActionService : ICorrectiveActionService
         await _repository.AddAsync(action);
 
         _logger.LogInformation("Corrective action created successfully");
+
+        if (dto.AssignedToUserId > 0)
+        {
+            var employee = await _userRepository.GetByIdAsync(dto.AssignedToUserId);
+            var observation = await _observationRepository.GetByIdAsync(dto.ObservationId);
+
+            if (employee != null && observation != null)
+            {
+                var body = $@"Dear {employee.Name},
+
+A corrective action has been assigned to you on AuditPro.
+
+Action Details:
+  Observation   : {observation.Title}
+  Description   : {dto.ActionDescription}
+  Root Cause    : {dto.RootCause}
+  Expected Outcome : {dto.ExpectedOutcome}
+  Due Date      : {action.DueDate}
+  Status        : {action.Status}
+
+Please log in to AuditPro to review and take the necessary action before the due date.
+
+Regards,
+AuditPro System
+Enterprise Audit Management
+
+--
+This is an automated message. Please do not reply to this email.
+(c) {DateTime.UtcNow.Year} AuditPro. All rights reserved.";
+
+                await _emailService.SendEmailAsync(employee.Email, "New Corrective Action Assigned to You", body);
+
+                _logger.LogInformation("Assignment notification sent to employee: {Email}", employee.Email);
+            }
+        }
     }
 
     public async Task<List<CorrectiveActionResponseDto>> GetActionsByObservation(int observationId)
@@ -190,7 +225,8 @@ public class CorrectiveActionService : ICorrectiveActionService
             ExpectedOutcome = a.ExpectedOutcome,
             DueDate = a.DueDate,
             Status = a.Status,
-            ProofFilePath = a.Observation?.ProofFilePath
+            ProofFileData = a.Observation?.ProofFileData != null ? Convert.ToBase64String(a.Observation.ProofFileData) : null,
+            ProofFileName = a.Observation?.ProofFileName
         }).ToList();
     }
 

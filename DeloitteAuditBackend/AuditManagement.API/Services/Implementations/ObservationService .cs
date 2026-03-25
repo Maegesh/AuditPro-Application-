@@ -4,7 +4,6 @@ using AuditManagement.API.Models;
 using AuditManagement.API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Microsoft.AspNetCore.Hosting;
 
 namespace AuditManagement.API.Services.Implementations;
 
@@ -13,17 +12,14 @@ public class ObservationService : IObservationService
     private readonly IObservationRepository _observationRepository;
     private readonly AuditSystemDbContext _context;
     private readonly ILogger<ObservationService> _logger;
-    private readonly IWebHostEnvironment _env;
 
     public ObservationService(IObservationRepository observationRepository,
                               AuditSystemDbContext context,
-                              ILogger<ObservationService> logger,
-                              IWebHostEnvironment env)
+                              ILogger<ObservationService> logger)
     {
         _observationRepository = observationRepository;
         _context = context;
         _logger = logger;
-        _env = env;
     }
 
     public async Task AddObservationAsync(CreateObservationDto dto)
@@ -62,12 +58,10 @@ public class ObservationService : IObservationService
 
         if (dto.ProofFile != null)
         {
-            var uploadsFolder = Path.Combine(_env.ContentRootPath, "wwwroot", "uploads");
-            Directory.CreateDirectory(uploadsFolder);
-            var fileName = $"{Guid.NewGuid()}_{Path.GetFileName(dto.ProofFile.FileName)}";
-            using var stream = new FileStream(Path.Combine(uploadsFolder, fileName), FileMode.Create);
-            await dto.ProofFile.CopyToAsync(stream);
-            observation.ProofFilePath = $"/uploads/{fileName}";
+            using var ms = new MemoryStream();
+            await dto.ProofFile.CopyToAsync(ms);
+            observation.ProofFileData = ms.ToArray();
+            observation.ProofFileName = dto.ProofFile.FileName;
         }
 
         await _observationRepository.AddAsync(observation);
@@ -91,7 +85,8 @@ public class ObservationService : IObservationService
             Recommendation = o.Recommendation!,
             Severity = o.Severity!,
             DueDate = o.DueDate,
-            ProofFilePath = o.ProofFilePath
+            ProofFileData = o.ProofFileData != null ? Convert.ToBase64String(o.ProofFileData) : null,
+            ProofFileName = o.ProofFileName
         }).ToList();
     }
 

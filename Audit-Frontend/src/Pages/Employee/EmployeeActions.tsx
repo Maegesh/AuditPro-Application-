@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
-import { CheckSquare } from 'lucide-react'
+import { CheckSquare, X } from 'lucide-react'
 import { Card, CardContent } from '@/Components/ui/card'
 import { Button } from '@/Components/ui/button'
 import { Label } from '@/Components/ui/label'
@@ -17,10 +17,15 @@ interface CorrectiveAction {
   expectedOutcome: string
   dueDate: string
   status: string
-  proofFilePath?: string
+  proofFileData?: string
+  proofFileName?: string
 }
 
-const BACKEND_URL = 'http://localhost:5000'
+interface Toast {
+  id: number
+  message: string
+  type: 'error' | 'success'
+}
 
 const EmployeeActions: React.FC = () => {
   const [actions, setActions] = useState<CorrectiveAction[]>([])
@@ -28,14 +33,25 @@ const EmployeeActions: React.FC = () => {
   const [selectedStatus, setSelectedStatus] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [toasts, setToasts] = useState<Toast[]>([])
+
+  const showToast = (message: string, type: 'error' | 'success' = 'error') => {
+    const id = Date.now()
+    setToasts((prev) => [...prev, { id, message, type }])
+    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 3500)
+  }
 
   const handleDownloadPdf = async (actionId: number) => {
     try {
       const token = localStorage.getItem('token')
-      const res = await fetch(`http://localhost:5000/api/actions/${actionId}/pdf`, {
+      const res = await fetch(`http://localhost:5001/api/actions/${actionId}/pdf`, {
         headers: { Authorization: `Bearer ${token}` },
       })
-      if (!res.ok) throw new Error()
+      if (!res.ok) {
+        const err = await res.json().catch(() => null)
+        showToast(err?.message ?? 'Failed to generate action report. Please try again.')
+        return
+      }
       const blob = await res.blob()
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -44,7 +60,7 @@ const EmployeeActions: React.FC = () => {
       a.click()
       URL.revokeObjectURL(url)
     } catch {
-      alert('Failed to download PDF.')
+      showToast('Failed to generate action report. Please try again.')
     }
   }
   const location = useLocation()
@@ -113,16 +129,23 @@ const EmployeeActions: React.FC = () => {
                   <span className="col-span-2"><span className="font-medium text-slate-600">Expected Outcome:</span> {a.expectedOutcome}</span>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  {a.proofFilePath && (
-                    <a href={`${BACKEND_URL}${a.proofFilePath}`} target="_blank" rel="noopener noreferrer"
-                      className="text-xs text-blue-600 hover:underline">
-                      📄 View Proof PDF
+                <div className="flex items-center gap-3 border-t border-slate-100 pt-3">
+                  {a.proofFileData ? (
+                    <a
+                      href={`data:application/pdf;base64,${a.proofFileData}`}
+                      download={a.proofFileName ?? 'proof.pdf'}
+                      className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-md hover:bg-blue-100 transition-colors"
+                    >
+                      📄 Proof Document
                     </a>
+                  ) : (
+                    <span className="text-xs text-slate-400 italic">No proof document attached</span>
                   )}
-                  <button onClick={() => handleDownloadPdf(a.actionId)}
-                    className="text-xs text-emerald-600 hover:underline">
-                    ⬇ Download Action PDF
+                  <button
+                    onClick={() => handleDownloadPdf(a.actionId)}
+                    className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600 bg-emerald-50 border border-emerald-100 px-3 py-1.5 rounded-md hover:bg-emerald-100 transition-colors ml-auto"
+                  >
+                    ⬇ Action Report
                   </button>
                 </div>
 
@@ -166,6 +189,22 @@ const EmployeeActions: React.FC = () => {
           </div>
         </Modal>
       )}
+      {/* Toast notifications */}
+      <div className="fixed bottom-5 right-5 flex flex-col gap-2 z-50">
+        {toasts.map((t) => (
+          <div
+            key={t.id}
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg text-sm font-medium text-white transition-all ${
+              t.type === 'error' ? 'bg-red-500' : 'bg-emerald-500'
+            }`}
+          >
+            <span>{t.message}</span>
+            <button onClick={() => setToasts((prev) => prev.filter((x) => x.id !== t.id))}>
+              <X className="w-4 h-4 opacity-70 hover:opacity-100" />
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

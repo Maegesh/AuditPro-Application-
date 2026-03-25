@@ -23,5 +23,11 @@ export const createUser = (payload: CreateUserPayload) =>
 export const getAllUsers = () =>
   api.get<User[]>('/users')
 
+export const getAuditorsByDepartment = (departmentId: number) =>
+  api.get<User[]>(`/users/auditors?departmentId=${departmentId}`)
+
 export const getEmployees = () =>
   api.get<User[]>('/users/employees')
+
+export const updateProfile = (payload: { name?: string; password?: string; expertise?: string }) =>
+  api.put('/users/me', payload)

@@ -16,5 +16,7 @@ public class CorrectiveActionResponseDto
 
     public string? Status { get; set; }
 
-    public string? ProofFilePath { get; set; }
+    public string? ProofFileData { get; set; }  // Base64 encoded
+
+    public string? ProofFileName { get; set; }
 }

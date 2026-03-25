@@ -11,4 +11,14 @@ public class AuditResponseDto
     public DateOnly? StartDate { get; set; }
 
     public DateOnly? EndDate { get; set; }
+
+    public string AuditorName { get; set; } = null!;
+
+    public string AuditorEmail { get; set; } = null!;
+
+    public string DepartmentName { get; set; } = null!;
+
+    public string CreatedBy { get; set; } = null!;
+
+    public DateTime? CreatedAt { get; set; }
 }

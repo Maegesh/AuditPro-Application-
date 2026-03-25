@@ -17,7 +17,14 @@ public class AuthController : ControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> Login([FromBody] LoginDto dto)
     {
-        var result = await _userService.LoginAsync(dto);
-        return Ok(result);
+        try
+        {
+            var result = await _userService.LoginAsync(dto);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
     }
 }

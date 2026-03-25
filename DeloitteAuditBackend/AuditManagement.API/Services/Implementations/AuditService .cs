@@ -61,7 +61,12 @@ public class AuditService : IAuditService
             AuditName = a.AuditName,
             Status = a.Status,
             StartDate = a.StartDate,
-            EndDate = a.EndDate
+            EndDate = a.EndDate,
+            AuditorName = a.Auditor?.Name ?? "—",
+            AuditorEmail = a.Auditor?.Email ?? "—",
+            DepartmentName = a.Department?.DepartmentName ?? "—",
+            CreatedBy = a.CreatedByUser?.Name ?? "—",
+            CreatedAt = a.CreatedAt
         }).ToList();
     }
 
@@ -77,7 +82,12 @@ public class AuditService : IAuditService
             AuditName = a.AuditName,
             Status = a.Status,
             StartDate = a.StartDate,
-            EndDate = a.EndDate
+            EndDate = a.EndDate,
+            AuditorName = a.Auditor?.Name ?? "—",
+            AuditorEmail = a.Auditor?.Email ?? "—",
+            DepartmentName = a.Department?.DepartmentName ?? "—",
+            CreatedBy = a.CreatedByUser?.Name ?? "—",
+            CreatedAt = a.CreatedAt
         }).ToList();
     }
 

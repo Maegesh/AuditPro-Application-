@@ -45,9 +45,30 @@ public class UserService : IUserService
 
         _logger.LogInformation("User saved to DB: {Email}", dto.Email);
 
-        var body = $@"Hello {dto.Name},<br/>Your account has been created.<br/><b>Email:</b> {dto.Email}<br/><b>Password:</b> {password}";
+        var body = $@"Dear {dto.Name},
 
-        await _emailService.SendEmailAsync(dto.Email, "Login Credentials", body);
+Welcome to AuditPro - Enterprise Audit Management Platform.
+
+Your account has been set up by the system administrator. Please use the credentials below to access the platform.
+
+Login Credentials:
+  Email    : {dto.Email}
+  Password : {password}
+  Role     : {dto.Role}
+
+For security purposes, you are required to change your password upon your first login.
+
+Should you have any questions or require assistance, please reach out to your system administrator.
+
+Regards,
+AuditPro System
+Enterprise Audit Management
+
+--
+This is an automated message. Please do not reply to this email.
+(c) {DateTime.UtcNow.Year} AuditPro. All rights reserved.";
+
+        await _emailService.SendEmailAsync(dto.Email, "Your AuditPro Account Credentials", body);
 
         _logger.LogInformation("Email sent to user: {Email}", dto.Email);
     }

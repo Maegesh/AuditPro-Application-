@@ -66,7 +66,14 @@ public class CorrectiveActionController : ControllerBase
     [Authorize(Roles = "Admin,Auditor,Employee")]
     public async Task<IActionResult> GetActionPdf(int id)
     {
-        var pdfBytes = await _service.GetActionPdfAsync(id);
-        return File(pdfBytes, "application/pdf", $"CorrectiveAction_{id}.pdf");
+        try
+        {
+            var pdfBytes = await _service.GetActionPdfAsync(id);
+            return File(pdfBytes, "application/pdf", $"CorrectiveAction_{id}.pdf");
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 }

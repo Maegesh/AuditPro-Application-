@@ -24,14 +24,19 @@ public class AuditRepository : IAuditRepository
     public async Task<List<Audit>> GetAuditsByCreatorAsync(int userId)
     {
         return await _context.Audits
+            .Include(a => a.Auditor)
+            .Include(a => a.Department)
+            .Include(a => a.CreatedByUser)
             .Where(a => a.CreatedByUserId == userId && a.IsDeleted != true)
             .ToListAsync();
     }
 
-    // Auditor → audits assigned to him
     public async Task<List<Audit>> GetAuditsByAuditorAsync(int auditorId)
     {
         return await _context.Audits
+            .Include(a => a.Auditor)
+            .Include(a => a.Department)
+            .Include(a => a.CreatedByUser)
             .Where(a => a.AuditorId == auditorId && a.IsDeleted != true)
             .ToListAsync();
     }

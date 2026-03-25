@@ -1,12 +1,5 @@
 import api from './api'
 
-export interface Auditor {
-  userId: number
-  name: string
-  email: string
-  expertise: string
-}
-
 export interface AuditPayload {
   auditName: string
   departmentId: number
@@ -22,10 +15,12 @@ export interface Audit {
   status: string
   startDate: string | null
   endDate: string | null
+  auditorName: string
+  auditorEmail: string
+  departmentName: string
+  createdBy: string
+  createdAt: string | null
 }
-
-export const getAuditorsByDepartment = (departmentId: number) =>
-  api.get<Auditor[]>(`/users/auditors?departmentId=${departmentId}`)
 
 export const createAudit = (payload: AuditPayload) =>
   api.post('/audits', payload)

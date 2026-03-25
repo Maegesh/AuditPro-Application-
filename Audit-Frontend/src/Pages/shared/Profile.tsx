@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/Components/ui/card'
 import { Button } from '@/Components/ui/button'
 import { Input } from '@/Components/ui/input'
 import { Label } from '@/Components/ui/label'
-import { updateProfile } from '@/Services/profileService'
+import { updateProfile } from '@/Services/userService'
 
 const Profile: React.FC = () => {
   const currentName = localStorage.getItem('name') ?? ''

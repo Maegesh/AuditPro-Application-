@@ -16,8 +16,6 @@ import { getObservations, addObservation } from '@/Services/observationService'
 import { addCorrectiveAction, getCorrectiveActions } from '@/Services/correctiveActionService'
 import { getEmployees, type User } from '@/Services/userService'
 
-const BACKEND_URL = 'http://localhost:5000'
-
 interface Observation {
   observationId: number
   title: string
@@ -28,7 +26,8 @@ interface Observation {
   recommendation: string
   severity: string
   dueDate: string
-  proofFilePath?: string
+  proofFileData?: string
+  proofFileName?: string
 }
 
 interface CorrectiveAction {
@@ -258,14 +257,13 @@ const AuditorObservations: React.FC = () => {
                   <span className="col-span-2"><span className="font-medium text-slate-600">Recommendation:</span> {o.recommendation}</span>
                 </div>
 
-                {o.proofFilePath && (
+                {o.proofFileData && (
                   <a
-                    href={`${BACKEND_URL}${o.proofFilePath}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href={`data:application/pdf;base64,${o.proofFileData}`}
+                    download={o.proofFileName ?? 'proof.pdf'}
                     className="text-xs text-blue-600 hover:underline w-fit"
                   >
-                    📄 View Proof PDF
+                    📄 Download {o.proofFileName ?? 'Proof Document'}
                   </a>
                 )}
 
