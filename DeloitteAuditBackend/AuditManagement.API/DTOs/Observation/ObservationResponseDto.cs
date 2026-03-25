@@ -6,19 +6,21 @@ public class ObservationResponseDto
 
     public int AuditId { get; set; }
 
-    public string Title { get; set; }
+    public string Title { get; set; } = null!;
 
-    public string Description { get; set; }
+    public string Description { get; set; } = null!;
 
-    public string AreaOrLocation { get; set; }
+    public string AreaOrLocation { get; set; } = null!;
 
-    public string Finding { get; set; }
+    public string Finding { get; set; } = null!;
 
-    public string RiskOrImpact { get; set; }
+    public string RiskOrImpact { get; set; } = null!;
 
-    public string Recommendation { get; set; }
+    public string Recommendation { get; set; } = null!;
 
-    public string Severity { get; set; }
+    public string Severity { get; set; } = null!;
 
     public DateOnly? DueDate { get; set; }
+
+    public string? ProofFilePath { get; set; }
 }

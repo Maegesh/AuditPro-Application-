@@ -49,9 +49,10 @@ const Login: React.FC = () => {
     setLoading(true)
     try {
       const res = await api.post('/auth/login', { email, password })
-      const { token, role } = res.data
+      const { token, role, name } = res.data
       localStorage.setItem('token', token)
       localStorage.setItem('role', role)
+      localStorage.setItem('name', name ?? '')
       const routes: Record<string, string> = { Admin: '/admin', Auditor: '/auditor', Employee: '/employee' }
       navigate(routes[role] ?? '/')
     } catch (err: any) {

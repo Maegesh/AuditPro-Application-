@@ -32,3 +32,12 @@ export const createAudit = (payload: AuditPayload) =>
 
 export const getAdminAudits = () =>
   api.get<Audit[]>('/audits/admin')
+
+export const getAuditorAudits = () =>
+  api.get<Audit[]>('/audits/auditor')
+
+export const submitAudit = (auditId: number) =>
+  api.put(`/audits/${auditId}/submit`)
+
+export const approveAudit = (auditId: number) =>
+  api.put(`/audits/${auditId}/approve`)

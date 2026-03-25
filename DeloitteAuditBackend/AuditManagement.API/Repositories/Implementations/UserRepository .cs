@@ -14,13 +14,13 @@ public class UserRepository : IUserRepository
         _context = context;
     }
 
-    public async Task<User> GetByEmailAsync(string email)
+    public async Task<User?> GetByEmailAsync(string email)
     {
         return await _context.Users
             .FirstOrDefaultAsync(u => u.Email == email && u.IsDeleted != true);
     }
 
-    public async Task<User> GetByIdAsync(int userId)
+    public async Task<User?> GetByIdAsync(int userId)
     {
         return await _context.Users
             .FirstOrDefaultAsync(u => u.UserId == userId && u.IsDeleted != true);

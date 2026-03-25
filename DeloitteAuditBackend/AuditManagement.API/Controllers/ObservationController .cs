@@ -17,7 +17,7 @@ public class ObservationController : ControllerBase
     // Auditor adds observation
     [HttpPost]
     [Authorize(Roles = "Auditor")]
-    public async Task<IActionResult> AddObservation([FromBody] CreateObservationDto dto)
+    public async Task<IActionResult> AddObservation([FromForm] CreateObservationDto dto)
     {
         await _service.AddObservationAsync(dto);
         return Ok("Observation added successfully");

@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ClipboardList, Users, Building2, Eye, CheckSquare, PlusCircle, ThumbsUp } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card'
-import { Button } from '@/Components/ui/button'
-import { getAllUsers, getDepartments } from '@/Services/userService'
+import StatCard from '@/Components/shared/StatCard'
+import QuickActionCard from '@/Components/shared/QuickActionCard'
+import { getAllUsers } from '@/Services/userService'
+import { getDepartments } from '@/Services/departmentService'
 import { getAdminAudits } from '@/Services/auditService'
 
 const quickActions = [
@@ -40,55 +41,24 @@ const AdminDashboard: React.FC = () => {
     { label: 'Pending Approvals', value: counts.pending, icon: ThumbsUp, color: 'bg-amber-50 text-amber-600' },
   ]
 
+  const name = localStorage.getItem('name') ?? 'Admin'
+
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="text-2xl font-bold text-slate-800">Welcome back, Admin</h2>
+        <h2 className="text-2xl font-bold text-slate-800">Welcome back, {name}</h2>
         <p className="text-slate-500 text-sm mt-1">Here's an overview of your audit management system.</p>
       </div>
 
-      {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        {stats.map(({ label, value, icon: Icon, color }) => (
-          <Card key={label} className="border-slate-200">
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${color}`}>
-                <Icon className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-slate-800">{value}</p>
-                <p className="text-xs text-slate-500 mt-0.5">{label}</p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+        {stats.map((s) => <StatCard key={s.label} {...s} />)}
       </div>
 
-      {/* Quick Actions */}
       <div>
         <h3 className="text-base font-semibold text-slate-700 mb-3">Quick Actions</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {quickActions.map(({ label, icon: Icon, to, description }) => (
-            <Card
-              key={label}
-              className="border-slate-200 hover:shadow-md transition-shadow cursor-pointer"
-              onClick={() => navigate(to)}
-            >
-              <CardHeader className="pb-2 pt-5 px-5">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
-                    <Icon className="w-4 h-4 text-blue-600" />
-                  </div>
-                  <CardTitle className="text-sm text-slate-800">{label}</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent className="px-5 pb-5">
-                <p className="text-xs text-slate-500 leading-relaxed">{description}</p>
-                <Button size="sm" variant="ghost" className="mt-3 px-0 text-blue-600 hover:text-blue-700 hover:bg-transparent text-xs font-medium h-auto">
-                  Go →
-                </Button>
-              </CardContent>
-            </Card>
+          {quickActions.map(({ label, icon, to, description }) => (
+            <QuickActionCard key={label} label={label} icon={icon} description={description} onClick={() => navigate(to)} />
           ))}
         </div>
       </div>
