@@ -99,8 +99,7 @@ public partial class AuditSystemDbContext : DbContext
             entity.Property(e => e.Severity).HasMaxLength(50);
             entity.Property(e => e.Title).HasMaxLength(200);
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
-            entity.Property(e => e.ProofFileData).HasColumnType("varbinary(max)");
-            entity.Property(e => e.ProofFileName).HasMaxLength(255);
+            entity.Property(e => e.ProofFilePath);
 
             entity.HasOne(d => d.Audit).WithMany(p => p.Observations)
                 .HasForeignKey(d => d.AuditId)

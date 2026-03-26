@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ClipboardList, Users, Building2, Eye, CheckSquare, PlusCircle, ThumbsUp } from 'lucide-react'
+import { ClipboardList, Users, Building2, CheckSquare, PlusCircle, ThumbsUp } from 'lucide-react'
 import StatCard from '@/Components/shared/StatCard'
 import QuickActionCard from '@/Components/shared/QuickActionCard'
 import { getAllUsers } from '@/Services/userService'
@@ -11,8 +11,7 @@ const quickActions = [
   { label: 'Create Audit', icon: PlusCircle, to: '/admin/audits', description: 'Schedule a new audit and assign an auditor' },
   { label: 'Add User', icon: Users, to: '/admin/users', description: 'Create a new Auditor or Employee account' },
   { label: 'Add Department', icon: Building2, to: '/admin/departments', description: 'Register a new department' },
-  { label: 'View Observations', icon: Eye, to: '/admin/observations', description: 'Review audit observations' },
-  { label: 'Corrective Actions', icon: CheckSquare, to: '/admin/corrective-actions', description: 'Assign and track corrective actions' },
+  { label: 'Observations & Actions', icon: CheckSquare, to: '/admin/corrective-actions', description: 'View observations and track corrective actions' },
   { label: 'Approve Audits', icon: ThumbsUp, to: '/admin/audits', description: 'Approve submitted audits' },
 ]
 

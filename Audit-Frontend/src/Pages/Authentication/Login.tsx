@@ -52,7 +52,7 @@ const Login: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex flex-col lg:flex-row">
 
       {/* ── LEFT PANEL ── */}
       <div className="hidden lg:flex lg:w-[55%] relative flex-col justify-between overflow-hidden bg-[#0f1c3f] px-14 py-12">
@@ -137,18 +137,50 @@ const Login: React.FC = () => {
       {/* ── RIGHT PANEL ── */}
       <div className="flex-1 flex flex-col bg-slate-50">
 
-        {/* Top bar */}
-        <div className="flex items-center justify-between px-8 py-5 lg:hidden">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
-              <ShieldCheck className="w-4 h-4 text-white" />
+        {/* Mobile branding bar — shown below lg */}
+        <div className="lg:hidden bg-[#0f1c3f] px-6 py-8 flex flex-col gap-6">
+          {/* Logo */}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-blue-500 shadow-lg shadow-blue-500/30">
+              <ShieldCheck className="w-5 h-5 text-white" />
             </div>
-            <span className="font-bold text-slate-800">AuditPro</span>
+            <div>
+              <p className="text-white font-bold text-lg leading-none tracking-tight">AuditPro</p>
+              <p className="text-blue-300 text-[11px] tracking-widest uppercase">Enterprise Suite</p>
+            </div>
+          </div>
+          {/* Tagline */}
+          <div className="flex flex-col gap-1">
+            <h1 className="text-2xl font-bold text-white leading-tight">
+              Audit smarter.{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">
+                Stay compliant.
+              </span>
+            </h1>
+            <p className="text-slate-400 text-sm">Unified audit lifecycle management platform.</p>
+          </div>
+          {/* Feature pills */}
+          <div className="flex flex-wrap gap-2">
+            {features.map(({ icon: Icon, text }) => (
+              <div key={text} className="flex items-center gap-1.5 bg-blue-500/10 border border-blue-500/20 rounded-full px-3 py-1">
+                <Icon className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
+                <span className="text-blue-200 text-xs">{text}</span>
+              </div>
+            ))}
+          </div>
+          {/* Stats */}
+          <div className="grid grid-cols-3 gap-3 pt-2 border-t border-white/10">
+            {stats.map(({ value, label }) => (
+              <div key={label}>
+                <p className="text-xl font-bold text-white">{value}</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">{label}</p>
+              </div>
+            ))}
           </div>
         </div>
 
         {/* Form area */}
-        <div className="flex-1 flex flex-col items-center justify-center px-8 py-12">
+        <div className="flex-1 flex flex-col items-center justify-center px-4 sm:px-8 py-10">
           <div className="w-full max-w-[400px] flex flex-col gap-8">
 
             {/* Heading */}
@@ -261,7 +293,7 @@ const Login: React.FC = () => {
         </div>
 
         {/* Footer */}
-        <div className="px-8 py-4 border-t border-slate-200 flex items-center justify-between">
+        <div className="px-4 sm:px-8 py-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
           <p className="text-xs text-slate-400">© {new Date().getFullYear()} AuditPro. All rights reserved.</p>
           <div className="flex items-center gap-1 text-xs text-slate-400">
             <Lock className="w-3 h-3" />

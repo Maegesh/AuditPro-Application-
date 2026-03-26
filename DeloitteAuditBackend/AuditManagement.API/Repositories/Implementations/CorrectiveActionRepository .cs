@@ -30,6 +30,7 @@ public class CorrectiveActionRepository : ICorrectiveActionRepository
     public async Task<CorrectiveAction?> GetByIdAsync(int actionId)
     {
         return await _context.CorrectiveActions
+            .Include(a => a.Observation)
             .FirstOrDefaultAsync(a => a.ActionId == actionId && a.IsDeleted != true);
     }
 

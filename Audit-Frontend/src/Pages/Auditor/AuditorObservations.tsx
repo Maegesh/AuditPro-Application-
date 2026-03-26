@@ -61,6 +61,8 @@ const AuditorObservations: React.FC = () => {
   const [obsLoading, setObsLoading] = useState(false)
   const [obsError, setObsError] = useState('')
   const [proofFile, setProofFile] = useState<File | null>(null)
+  const [modalStep, setModalStep] = useState<'observation' | 'action'>('observation')
+  const [newObservationId, setNewObservationId] = useState<number | null>(null)
 
   const [expandedObs, setExpandedObs] = useState<number | null>(null)
   const [actionsMap, setActionsMap] = useState<Record<number, CorrectiveAction[]>>({})
@@ -121,6 +123,17 @@ const AuditorObservations: React.FC = () => {
 
   const today = new Date().toISOString().split('T')[0]
 
+  const closeObsModal = () => {
+    setShowObsModal(false)
+    setObsForm(defaultObsForm)
+    setProofFile(null)
+    setObsError('')
+    setModalStep('observation')
+    setNewObservationId(null)
+    setActionForm(defaultActionForm)
+    setActionError('')
+  }
+
   const handleObsSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!selectedAuditId) { setObsError('Please select an audit first.'); return }
@@ -147,8 +160,14 @@ const AuditorObservations: React.FC = () => {
       formData.append('dueDate', obsForm.dueDate)
       if (proofFile) formData.append('proofFile', proofFile)
       await addObservation(formData)
-      await getObservations(Number(selectedAuditId)).then((res) => setObservations(res.data))
-      setObsForm(defaultObsForm); setProofFile(null); setShowObsModal(false)
+      const res = await getObservations(Number(selectedAuditId))
+      setObservations(res.data)
+      // transition to step 2 — assign corrective action
+      const created = res.data[res.data.length - 1]
+      setNewObservationId(created.observationId)
+      setModalStep('action')
+      setObsForm(defaultObsForm)
+      setProofFile(null)
     } catch (err: any) {
       setObsError(err?.response?.data?.message ?? 'Failed to add observation.')
     } finally { setObsLoading(false) }
@@ -167,6 +186,11 @@ const AuditorObservations: React.FC = () => {
     if (actionForm.dueDate < today) {
       setActionError('Due date cannot be in the past.'); return
     }
+    // corrective action due date should not exceed the observation due date
+    const obs = observations.find((o) => o.observationId === observationId)
+    if (obs?.dueDate && actionForm.dueDate > obs.dueDate) {
+      setActionError(`Due date cannot exceed observation due date (${obs.dueDate}).`); return
+    }
     setActionLoading(true); setActionError('')
     try {
       await addCorrectiveAction({
@@ -179,7 +203,13 @@ const AuditorObservations: React.FC = () => {
         status: actionForm.status,
       })
       loadActions(observationId)
-      setActionForm(defaultActionForm); setShowActionModal(null)
+      setActionForm(defaultActionForm)
+      // if coming from obs modal step 2, close the whole modal
+      if (modalStep === 'action') {
+        closeObsModal()
+      } else {
+        setShowActionModal(null)
+      }
     } catch (err: any) {
       setActionError(err?.response?.data?.message ?? 'Failed to assign corrective action.')
     } finally { setActionLoading(false) }
@@ -323,62 +353,137 @@ const AuditorObservations: React.FC = () => {
       )}
 
       {showObsModal && (
-        <Modal title="Add Observation" subtitle="Record a finding from your audit." onClose={() => { setShowObsModal(false); setObsForm(defaultObsForm); setProofFile(null); setObsError('') }} maxWidth="max-w-lg">
-          <form onSubmit={handleObsSubmit} className="flex flex-col gap-4">
-            <div className="flex flex-col gap-1.5">
-              <Label className="text-slate-700 text-sm">Title</Label>
-              <Input name="title" placeholder="e.g. Missing access controls" value={obsForm.title} onChange={handleObsChange} className="h-10" />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label className="text-slate-700 text-sm">Description</Label>
-              <textarea name="description" placeholder="Describe the observation..." value={obsForm.description} onChange={handleObsChange} rows={2}
-                className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
+        <Modal
+          title={modalStep === 'observation' ? 'Add Observation' : 'Assign Corrective Action'}
+          subtitle={
+            modalStep === 'observation'
+              ? 'Step 1 of 2 — Record a finding from your audit.'
+              : 'Step 2 of 2 — Assign a corrective action for this observation.'
+          }
+          onClose={closeObsModal}
+          maxWidth="max-w-lg"
+        >
+          {/* Step indicator */}
+          <div className="flex items-center gap-2 mb-1">
+            <div className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
+              modalStep === 'observation' ? 'bg-blue-600 text-white' : 'bg-emerald-500 text-white'
+            }`}>1</div>
+            <div className={`flex-1 h-0.5 ${modalStep === 'action' ? 'bg-blue-600' : 'bg-slate-200'}`} />
+            <div className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
+              modalStep === 'action' ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-400'
+            }`}>2</div>
+          </div>
+
+          {modalStep === 'observation' ? (
+            <form onSubmit={handleObsSubmit} className="flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
-                <Label className="text-slate-700 text-sm">Area / Location</Label>
-                <Input name="areaOrLocation" placeholder="e.g. Finance Dept" value={obsForm.areaOrLocation} onChange={handleObsChange} className="h-10" />
+                <Label className="text-slate-700 text-sm">Title</Label>
+                <Input name="title" placeholder="e.g. Missing access controls" value={obsForm.title} onChange={handleObsChange} className="h-10" />
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label className="text-slate-700 text-sm">Severity</Label>
-                <select name="severity" value={obsForm.severity} onChange={handleObsChange}
+                <Label className="text-slate-700 text-sm">Description</Label>
+                <textarea name="description" placeholder="Describe the observation..." value={obsForm.description} onChange={handleObsChange} rows={2}
+                  className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-slate-700 text-sm">Area / Location</Label>
+                  <Input name="areaOrLocation" placeholder="e.g. Finance Dept" value={obsForm.areaOrLocation} onChange={handleObsChange} className="h-10" />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-slate-700 text-sm">Severity</Label>
+                  <select name="severity" value={obsForm.severity} onChange={handleObsChange}
+                    className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="Low">Low</option>
+                    <option value="Medium">Medium</option>
+                    <option value="High">High</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-slate-700 text-sm">Finding</Label>
+                <Input name="finding" placeholder="What was found?" value={obsForm.finding} onChange={handleObsChange} className="h-10" />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-slate-700 text-sm">Risk / Impact</Label>
+                <Input name="riskOrImpact" placeholder="What is the risk?" value={obsForm.riskOrImpact} onChange={handleObsChange} className="h-10" />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-slate-700 text-sm">Recommendation</Label>
+                <Input name="recommendation" placeholder="Suggested action" value={obsForm.recommendation} onChange={handleObsChange} className="h-10" />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-slate-700 text-sm">Due Date</Label>
+                <Input name="dueDate" type="date" value={obsForm.dueDate} onChange={handleObsChange} className="h-10" min={today} max={auditEndDate} />
+                {auditEndDate && <p className="text-xs text-slate-400">Cannot exceed audit end date: {auditEndDate}</p>}
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-slate-700 text-sm">Proof Document (PDF) <span className="text-slate-400 font-normal">— optional</span></Label>
+                <input type="file" accept="application/pdf" onChange={(e) => setProofFile(e.target.files?.[0] ?? null)}
+                  className="text-sm text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border file:border-slate-200 file:text-xs file:bg-white file:text-slate-700 hover:file:bg-slate-50" />
+              </div>
+              {obsError && <p className="text-sm text-red-500 bg-red-50 border border-red-100 rounded-md px-3 py-2">{obsError}</p>}
+              <div className="flex gap-3 pt-1">
+                <Button type="button" variant="outline" className="flex-1 h-10" onClick={closeObsModal}>Cancel</Button>
+                <Button type="submit" disabled={obsLoading} className="flex-1 h-10 bg-blue-600 hover:bg-blue-700 text-white">
+                  {obsLoading ? 'Saving...' : 'Next: Assign Action →'}
+                </Button>
+              </div>
+            </form>
+          ) : (
+            <form onSubmit={(e) => handleActionSubmit(e, newObservationId!)} className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-slate-700 text-sm">Assign To Employee</Label>
+                <select name="assignedToUserId" value={actionForm.assignedToUserId} onChange={handleActionChange}
                   className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                  <option value="Low">Low</option>
-                  <option value="Medium">Medium</option>
-                  <option value="High">High</option>
+                  <option value="">Select employee</option>
+                  {employees.map((e) => (
+                    <option key={e.userId} value={e.userId}>{e.name} — {e.expertise}</option>
+                  ))}
                 </select>
               </div>
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label className="text-slate-700 text-sm">Finding</Label>
-              <Input name="finding" placeholder="What was found?" value={obsForm.finding} onChange={handleObsChange} className="h-10" />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label className="text-slate-700 text-sm">Risk / Impact</Label>
-              <Input name="riskOrImpact" placeholder="What is the risk?" value={obsForm.riskOrImpact} onChange={handleObsChange} className="h-10" />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label className="text-slate-700 text-sm">Recommendation</Label>
-              <Input name="recommendation" placeholder="Suggested action" value={obsForm.recommendation} onChange={handleObsChange} className="h-10" />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label className="text-slate-700 text-sm">Due Date</Label>
-              <Input name="dueDate" type="date" value={obsForm.dueDate} onChange={handleObsChange} className="h-10" min={today} max={auditEndDate} />
-              {auditEndDate && <p className="text-xs text-slate-400">Cannot exceed audit end date: {auditEndDate}</p>}
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label className="text-slate-700 text-sm">Proof Document (PDF) <span className="text-slate-400 font-normal">— optional</span></Label>
-              <input type="file" accept="application/pdf" onChange={(e) => setProofFile(e.target.files?.[0] ?? null)}
-                className="text-sm text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border file:border-slate-200 file:text-xs file:bg-white file:text-slate-700 hover:file:bg-slate-50" />
-            </div>
-            {obsError && <p className="text-sm text-red-500 bg-red-50 border border-red-100 rounded-md px-3 py-2">{obsError}</p>}
-            <div className="flex gap-3 pt-1">
-              <Button type="button" variant="outline" className="flex-1 h-10" onClick={() => { setShowObsModal(false); setObsForm(defaultObsForm); setProofFile(null); setObsError('') }}>Cancel</Button>
-              <Button type="submit" disabled={obsLoading} className="flex-1 h-10 bg-blue-600 hover:bg-blue-700 text-white">
-                {obsLoading ? 'Saving...' : 'Add Observation'}
-              </Button>
-            </div>
-          </form>
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-slate-700 text-sm">Action Description</Label>
+                <textarea name="actionDescription" placeholder="Describe the corrective action..." value={actionForm.actionDescription} onChange={handleActionChange} rows={2}
+                  className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-slate-700 text-sm">Root Cause</Label>
+                <Input name="rootCause" placeholder="What caused this issue?" value={actionForm.rootCause} onChange={handleActionChange} className="h-10" />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-slate-700 text-sm">Expected Outcome</Label>
+                <Input name="expectedOutcome" placeholder="What should be achieved?" value={actionForm.expectedOutcome} onChange={handleActionChange} className="h-10" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-slate-700 text-sm">Due Date</Label>
+                  <Input name="dueDate" type="date" value={actionForm.dueDate} onChange={handleActionChange} className="h-10"
+                    min={today}
+                    max={observations.find(o => o.observationId === newObservationId)?.dueDate ?? ''}
+                  />
+                  {newObservationId && observations.find(o => o.observationId === newObservationId)?.dueDate && (
+                    <p className="text-xs text-slate-400">Cannot exceed observation due date: {observations.find(o => o.observationId === newObservationId)?.dueDate}</p>
+                  )}
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-slate-700 text-sm">Status</Label>
+                  <select name="status" value={actionForm.status} onChange={handleActionChange}
+                    className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="Open">Open</option>
+                    <option value="InProgress">In Progress</option>
+                  </select>
+                </div>
+              </div>
+              {actionError && <p className="text-sm text-red-500 bg-red-50 border border-red-100 rounded-md px-3 py-2">{actionError}</p>}
+              <div className="flex gap-3 pt-1">
+                <Button type="button" variant="outline" className="flex-1 h-10" onClick={closeObsModal}>Skip & Close</Button>
+                <Button type="submit" disabled={actionLoading} className="flex-1 h-10 bg-blue-600 hover:bg-blue-700 text-white">
+                  {actionLoading ? 'Assigning...' : 'Assign Action'}
+                </Button>
+              </div>
+            </form>
+          )}
         </Modal>
       )}
 
@@ -411,7 +516,13 @@ const AuditorObservations: React.FC = () => {
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1.5">
                 <Label className="text-slate-700 text-sm">Due Date</Label>
-                <Input name="dueDate" type="date" value={actionForm.dueDate} onChange={handleActionChange} className="h-10" min={today} />
+                <Input name="dueDate" type="date" value={actionForm.dueDate} onChange={handleActionChange} className="h-10"
+                  min={today}
+                  max={observations.find(o => o.observationId === showActionModal)?.dueDate ?? ''}
+                />
+                {showActionModal && observations.find(o => o.observationId === showActionModal)?.dueDate && (
+                  <p className="text-xs text-slate-400">Cannot exceed observation due date: {observations.find(o => o.observationId === showActionModal)?.dueDate}</p>
+                )}
               </div>
               <div className="flex flex-col gap-1.5">
                 <Label className="text-slate-700 text-sm">Status</Label>

@@ -8,8 +8,7 @@ const pageTitles: Record<string, string> = {
   '/admin/audits': 'Audits',
   '/admin/users': 'Users',
   '/admin/departments': 'Departments',
-  '/admin/observations': 'Observations',
-  '/admin/corrective-actions': 'Corrective Actions',
+  '/admin/corrective-actions': 'Observations & Actions',
 }
 
 const AdminLayout: React.FC = () => (

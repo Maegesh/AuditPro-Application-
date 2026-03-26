@@ -22,7 +22,5 @@ public class ObservationResponseDto
 
     public DateOnly? DueDate { get; set; }
 
-    public string? ProofFileData { get; set; }  // Base64 encoded
-
-    public string? ProofFileName { get; set; }
+    public string? ProofFilePath { get; set; }
 }
