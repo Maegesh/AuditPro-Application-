@@ -13,11 +13,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ sidebar, navbar, page
   const title = pageTitles[pathname] ?? fallbackTitle
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex h-screen overflow-hidden bg-slate-50">
       {sidebar}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {navbar(title)}
-        <main className="flex-1 p-6 overflow-auto">
+        <main className="flex-1 p-6 overflow-y-auto">
           <Outlet />
         </main>
       </div>

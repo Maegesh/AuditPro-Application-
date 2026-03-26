@@ -1,5 +1,5 @@
 import React from 'react'
-import { LayoutDashboard, ClipboardList, Users, Building2, Eye, CheckSquare } from 'lucide-react'
+import { LayoutDashboard, ClipboardList, Users, Building2, CheckSquare } from 'lucide-react'
 import AppSidebar from '@/Components/shared/AppSidebar'
 
 const navItems = [
@@ -7,8 +7,7 @@ const navItems = [
   { to: '/admin/audits', label: 'Audits', icon: ClipboardList },
   { to: '/admin/users', label: 'Users', icon: Users },
   { to: '/admin/departments', label: 'Departments', icon: Building2 },
-  { to: '/admin/observations', label: 'Observations', icon: Eye },
-  { to: '/admin/corrective-actions', label: 'Corrective Actions', icon: CheckSquare },
+  { to: '/admin/corrective-actions', label: 'Observations & Actions', icon: CheckSquare },
 ]
 
 const Sidebar: React.FC = () => (

@@ -17,8 +17,7 @@ interface CorrectiveAction {
   expectedOutcome: string
   dueDate: string
   status: string
-  proofFileData?: string
-  proofFileName?: string
+  proofFilePath?: string
 }
 
 interface Toast {
@@ -44,7 +43,7 @@ const EmployeeActions: React.FC = () => {
   const handleDownloadPdf = async (actionId: number) => {
     try {
       const token = localStorage.getItem('token')
-      const res = await fetch(`http://localhost:5001/api/actions/${actionId}/pdf`, {
+      const res = await fetch(`http://localhost:5000/api/actions/${actionId}/pdf`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) {
@@ -57,8 +56,10 @@ const EmployeeActions: React.FC = () => {
       const a = document.createElement('a')
       a.href = url
       a.download = `CorrectiveAction_${actionId}.pdf`
+      document.body.appendChild(a)
       a.click()
-      URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+      setTimeout(() => URL.revokeObjectURL(url), 1000)
     } catch {
       showToast('Failed to generate action report. Please try again.')
     }
@@ -130,10 +131,11 @@ const EmployeeActions: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-3 border-t border-slate-100 pt-3">
-                  {a.proofFileData ? (
+                  {a.proofFilePath ? (
                     <a
-                      href={`data:application/pdf;base64,${a.proofFileData}`}
-                      download={a.proofFileName ?? 'proof.pdf'}
+                      href={`http://localhost:5000${a.proofFilePath}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-md hover:bg-blue-100 transition-colors"
                     >
                       📄 Proof Document

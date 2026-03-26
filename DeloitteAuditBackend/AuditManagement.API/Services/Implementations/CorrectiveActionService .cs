@@ -118,6 +118,12 @@ This is an automated message. Please do not reply to this email.
             throw new Exception("Corrective action not found");
         }
 
+        var employee = action.AssignedToUserId.HasValue
+            ? await _userRepository.GetByIdAsync(action.AssignedToUserId.Value)
+            : null;
+
+        var observation = await _observationRepository.GetByIdAsync(action.ObservationId);
+
         QuestPDF.Settings.License = LicenseType.Community;
 
         var pdf = Document.Create(container =>
@@ -136,8 +142,9 @@ This is an automated message. Please do not reply to this email.
                     col.Spacing(10);
 
                     col.Item().Text($"Action ID: {action.ActionId}").SemiBold();
-                    col.Item().Text($"Observation ID: {action.ObservationId}");
-                    col.Item().Text($"Assigned To User ID: {action.AssignedToUserId}");
+                    col.Item().Text($"Observation: {observation?.Title ?? "-"}");
+                    col.Item().Text($"Assigned To: {employee?.Name ?? "-"}");
+                    col.Item().Text($"Employee Email: {employee?.Email ?? "-"}");
                     col.Item().Text($"Status: {action.Status}");
                     col.Item().Text($"Due Date: {action.DueDate}");
 
@@ -225,8 +232,7 @@ This is an automated message. Please do not reply to this email.
             ExpectedOutcome = a.ExpectedOutcome,
             DueDate = a.DueDate,
             Status = a.Status,
-            ProofFileData = a.Observation?.ProofFileData != null ? Convert.ToBase64String(a.Observation.ProofFileData) : null,
-            ProofFileName = a.Observation?.ProofFileName
+            ProofFilePath = a.Observation?.ProofFilePath
         }).ToList();
     }
 
